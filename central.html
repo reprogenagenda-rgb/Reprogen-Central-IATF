@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Reprogen Central</title>
+<meta name="theme-color" content="#0d0f14">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Reprogen">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/x-icon" href="icons/favicon.ico">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192x192.png">
+<link rel="apple-touch-icon" href="icons/icon-180x180.png">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#0d0f14;color:#e0e0e0;font-family:'Segoe UI',sans-serif;min-height:100vh}
+.header{background:#131620;border-bottom:2px solid #f4a228;padding:14px 20px;display:flex;align-items:center;gap:16px}
+.logo{font-size:1.6rem;font-weight:900;color:#f4a228;letter-spacing:2px}
+.logo-sub{font-size:.75rem;color:#666;letter-spacing:1px}
+.badge{background:#1e2535;border:1px solid #2a3050;padding:4px 12px;border-radius:12px;font-size:.72rem;color:#888}
+.main{padding:20px;max-width:1400px;margin:0 auto}
+.card{background:#131620;border:1px solid #1e2535;border-radius:10px;padding:16px;margin-bottom:16px}
+.section-title{font-size:.7rem;color:#555;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:10px;font-weight:700}
+label{display:block;font-size:.75rem;color:#888;margin-bottom:3px;margin-top:10px}
+label:first-of-type{margin-top:0}
+input,select{width:100%;padding:8px 10px;background:#0d0f14;color:#0f0;border:1px solid #2a3050;border-radius:5px;font-size:.83rem;font-family:monospace}
+select{color:#e0e0e0;font-family:inherit}
+.btn-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.btn{padding:10px 18px;border:none;border-radius:6px;cursor:pointer;font-size:.88rem;font-weight:700;transition:.15s}
+.btn:hover{opacity:.85}
+.btn-primary{background:#f4a228;color:#000}
+.btn-save{background:#1a4a00;color:#5f0;border:1px solid #2a6600}
+.btn-export{background:#0a3a6a;color:#7bc8ff;border:1px solid #1a5a9a}
+.btn-danger{background:#3a0a0a;color:#ff7777;border:1px solid #6a1a1a}
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:16px}
+.kpi{background:#131620;border:1px solid #1e2535;border-radius:10px;padding:16px 12px;text-align:center;position:relative}
+.kpi-n{font-size:2.4rem;font-weight:900;line-height:1}
+.kpi-l{font-size:.7rem;color:#666;margin-top:6px;text-transform:uppercase;letter-spacing:.5px}
+.kpi-pct{font-size:.75rem;color:#555;margin-top:3px}
+.orange .kpi-n{color:#f4a228}
+.green .kpi-n{color:#2ecc71}
+.red .kpi-n{color:#e74c3c}
+.blue .kpi-n{color:#3498db}
+.yellow .kpi-n{color:#f1c40f}
+.purple .kpi-n{color:#9b59b6}
+.fazenda-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:10px;margin-bottom:16px}
+.fazenda-card{background:#131620;border:1px solid #1e2535;border-radius:8px;padding:12px}
+.fazenda-name{font-size:.85rem;font-weight:700;color:#f4a228;margin-bottom:8px}
+.bar-row{display:flex;align-items:center;gap:8px;margin-bottom:4px;font-size:.75rem}
+.bar-bg{flex:1;background:#1e2535;border-radius:3px;height:8px;overflow:hidden}
+.bar-fill{height:100%;border-radius:3px;transition:.4s}
+.filters{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
+.filters select,.filters input{width:auto;flex:1;min-width:120px;max-width:200px;color:#e0e0e0;font-family:inherit;font-size:.8rem}
+.table-wrap{overflow-x:auto;border:1px solid #1e2535;border-radius:8px;max-height:500px;overflow-y:auto}
+table{width:100%;border-collapse:collapse;font-size:.78rem}
+th{background:#0d0f14;color:#f4a228;padding:10px 8px;text-align:left;white-space:nowrap;position:sticky;top:0;z-index:1;border-bottom:1px solid #1e2535}
+td{padding:8px;border-bottom:1px solid #131620;vertical-align:middle}
+tr:hover td{background:#131620}
+.tag{display:inline-block;padding:2px 8px;border-radius:12px;font-size:.7rem;font-weight:700}
+.t-prenha{background:#0a1a0a;color:#2ecc71}
+.t-pend{background:#1a1000;color:#f4a228}
+.t-vazia{background:#1a0a0a;color:#e74c3c}
+.t-sem{background:#1a1a2a;color:#666}
+.mono{font-family:monospace;color:#f4a228;font-weight:700}
+.msg{padding:10px 14px;border-radius:6px;font-size:.83rem;margin-bottom:12px;display:none}
+.ok{background:#0a1a0a;color:#2ecc71;border:1px solid #2a6a2a}
+.err{background:#1a0a0a;color:#e74c3c;border:1px solid #6a2a2a}
+.warn{background:#1a1000;color:#f4a228;border:1px solid #6a4a00}
+#spinner{display:none;color:#f4a228;padding:8px 0;font-size:.85rem}
+.chart-wrap{display:flex;gap:20px;align-items:flex-start;flex-wrap:wrap}
+.chart-box{width:180px;height:180px;flex-shrink:0}
+.chart-legend{flex:1;min-width:180px}
+.legend-item{display:flex;align-items:center;gap:8px;margin-bottom:8px;font-size:.82rem}
+.legend-dot{width:12px;height:12px;border-radius:50%;flex-shrink:0}
+.empty-row td{text-align:center;color:#444;padding:40px;font-size:.85rem}
+</style>
+</head>
+<body>
+<div class="header">
+  <div>
+    <div class="logo">REPROGEN</div>
+    <div class="logo-sub">Central de Análises</div>
+  </div>
+  <div class="badge">Fase 3 · Nuvem Supabase</div>
+  <div class="badge" id="last-sync" style="margin-left:auto">Sem dados</div>
+</div>
+
+<div class="main">
+  <div id="toast" class="msg"></div>
+
+  <!-- CONFIG -->
+  <div class="card">
+    <div class="section-title">Conexão Supabase</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px">
+      <div>
+        <label>Project URL</label>
+        <input id="c-url" type="text" placeholder="https://xxxxx.supabase.co">
+      </div>
+      <div>
+        <label>Anon Key (legada eyJ...)</label>
+        <input id="c-key" type="password" placeholder="eyJ...">
+      </div>
+      <div>
+        <label>Fazenda (vazio = todas)</label>
+        <input id="c-farm" type="text" placeholder="ex: CHÃO PRETO">
+      </div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="loadData()">📊 Carregar Dados</button>
+      <button class="btn btn-save" onclick="saveConfig()">💾 Salvar Config</button>
+      <button class="btn btn-export" onclick="exportCP()">⬇ Concept Plus XLSX</button>
+      <button class="btn btn-export" onclick="exportJSON()">⬇ JSON Backup</button>
+    </div>
+    <div id="spinner">⏳ Carregando eventos da nuvem...</div>
+  </div>
+
+
+  <!-- IMPORTAR PLANILHA -->
+  <div class="card">
+    <div class="section-title">Importar Planilha Concept Plus (XLSX)</div>
+    <p style="font-size:.8rem;color:#666;margin-bottom:12px">
+      Importa planilha local e aplica a regra de IATF vigente automaticamente.<br>
+      Detecta cabeçalhos em qualquer linha (rows 1–15). Funciona offline.
+    </p>
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="importXLSX()">📂 Selecionar Planilha XLSX</button>
+      <span id="import-status" style="align-self:center;font-size:.8rem;color:#888"></span>
+    </div>
+  </div>
+
+  <!-- KPIs -->
+  <div class="section-title">Indicadores Gerais</div>
+  <div class="kpi-grid">
+    <div class="kpi yellow"><div class="kpi-n" id="k-ev">—</div><div class="kpi-l">Eventos</div></div>
+    <div class="kpi orange"><div class="kpi-n" id="k-an">—</div><div class="kpi-l">Matrizes</div></div>
+    <div class="kpi green"><div class="kpi-n" id="k-pr">—</div><div class="kpi-l">Prenha</div><div class="kpi-pct" id="k-pr-pct"></div></div>
+    <div class="kpi red"><div class="kpi-n" id="k-pd">—</div><div class="kpi-l">DG Pend</div><div class="kpi-pct" id="k-pd-pct"></div></div>
+    <div class="kpi blue"><div class="kpi-n" id="k-vz">—</div><div class="kpi-l">Vazia</div><div class="kpi-pct" id="k-vz-pct"></div></div>
+    <div class="kpi purple"><div class="kpi-n" id="k-fz">—</div><div class="kpi-l">Fazendas</div></div>
+  </div>
+
+  <!-- GRÁFICO + FAZENDAS -->
+  <div style="display:grid;grid-template-columns:auto 1fr;gap:16px;margin-bottom:16px;align-items:start;flex-wrap:wrap">
+    <div class="card" style="padding:16px;min-width:240px">
+      <div class="section-title">Status Reprodutivo</div>
+      <div class="chart-wrap">
+        <div class="chart-box"><canvas id="pieChart"></canvas></div>
+        <div class="chart-legend" id="pie-legend"></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="section-title">Por Fazenda</div>
+      <div class="fazenda-grid" id="fazenda-cards"><div style="color:#444;font-size:.82rem">Carregue os dados acima</div></div>
+    </div>
+  </div>
+
+  <!-- TABELA -->
+  <div class="card">
+    <div class="section-title">Matrizes</div>
+    <div class="filters">
+      <input id="f-id" type="text" placeholder="Buscar ID..." oninput="applyFilters()" style="max-width:140px">
+      <select id="f-faz" onchange="applyFilters()"><option value="">Todas as fazendas</option></select>
+      <select id="f-st" onchange="applyFilters()">
+        <option value="">Todos os status</option>
+        <option value="PRENHA">Prenha</option>
+        <option value="DG PEND">DG Pendente</option>
+        <option value="VAZIA">Vazia</option>
+        <option value="SEM IATF">Sem IATF</option>
+      </select>
+      <select id="f-lote" onchange="applyFilters()"><option value="">Todos os lotes</option></select>
+      <button class="btn btn-save" style="padding:7px 12px;font-size:.78rem;flex:none" onclick="clearFilters()">× Limpar</button>
+      <span id="f-count" style="color:#555;font-size:.75rem;align-self:center"></span>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr>
+          <th>ID Visual</th><th>ID Eletr.</th><th>Fazenda</th><th>Lote</th>
+          <th>Status</th><th>Data IATF</th><th>Touro</th>
+          <th>DG</th><th>Data DG</th><th>Operador</th>
+        </tr></thead>
+        <tbody id="tbody">
+          <tr class="empty-row"><td colspan="10">Configure e carregue os dados acima ↑</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+var ALL_ANIMALS = [];
+var ALL_EVENTS  = [];
+var pieChartInst = null;
+
+/* ── CONFIG ── */
+function saveConfig(){
+  var c={url:g('c-url').value,key:g('c-key').value,farm:g('c-farm').value};
+  ls('rg_central',JSON.stringify(c));
+  toast('Config salva','ok');
+}
+function loadConfig(){
+  try{
+    var c=JSON.parse(localStorage.getItem('rg_central')||'{}');
+    if(c.url)g('c-url').value=c.url;
+    if(c.key)g('c-key').value=c.key;
+    if(c.farm)g('c-farm').value=c.farm;
+  }catch(e){}
+}
+function getCfg(){
+  return{url:(g('c-url').value||'').replace(/\/+$/,''),key:g('c-key').value,farm:g('c-farm').value};
+}
+
+/* ── HELPERS ── */
+function g(id){return document.getElementById(id);}
+function ls(k,v){try{localStorage.setItem(k,v);}catch(e){}}
+function toast(msg,type){
+  var el=g('toast');el.className='msg '+(type||'ok');el.textContent=msg;el.style.display='block';
+  setTimeout(function(){el.style.display='none';},4000);
+}
+function pct(a,b){return b>0?Math.round(a/b*1000)/10+'%':'';}
+
+/* ── VIGENTE RECONSTRUCTION ── */
+function buildAnimals(events){
+  var byA={};
+  for(var i=0;i<events.length;i++){
+    var e=events[i];
+    var aid=e.id_animal;
+    if(!byA[aid])byA[aid]={id:aid,fazenda:e.fazenda,iatf_events:[],dg_events:[],d0:null,mn:null,parto:null,operador:e.operador||''};
+    var t=e.tipo;
+    if(t==='IATF')byA[aid].iatf_events.push(e);
+    else if(t==='DG')byA[aid].dg_events.push(e);
+    else if(t==='D0')byA[aid].d0=e;
+    else if(t==='MN')byA[aid].mn=e;
+    else if(t==='PARTO')byA[aid].parto=e;
+  }
+  var animals=[];
+  for(var id in byA){
+    var a=byA[id];
+    /* vigente IATF = a mais recente por data_evento */
+    a.iatf_events.sort(function(x,y){return (x.data_evento||'') < (y.data_evento||'')?1:-1;});
+    a.dg_events.sort(function(x,y){return (x.data_evento||'') < (y.data_evento||'')?1:-1;});
+    var vigIATF=a.iatf_events[0]||null;
+    var latDG  =a.dg_events[0]||null;
+    /* estado */
+    var state='SEM IATF';
+    if(vigIATF){
+      state='DG PEND';
+      if(latDG){
+        var r=(latDG.payload&&latDG.payload.resultado)||'';
+        if(r==='prenha')state='PRENHA';
+        else if(r==='vazia'||r==='0')state='VAZIA';
+      }
+    }
+    a.state=state;
+    a.vigIATF=vigIATF;
+    a.latDG=latDG;
+    /* extra fields */
+    a.lote=(vigIATF&&vigIATF.payload&&vigIATF.payload.lote)||
+           (a.d0&&a.d0.payload&&a.d0.payload.lote)||'';
+    a.touro=(vigIATF&&vigIATF.payload&&vigIATF.payload.touro)||'';
+    a.dataIATF=(vigIATF&&vigIATF.data_evento)||'';
+    a.dataDG=(latDG&&latDG.data_evento)||'';
+    a.dgResult=(latDG&&latDG.payload&&latDG.payload.resultado)||'';
+    a.idVisual=(a.d0&&a.d0.payload&&a.d0.payload.id_visual)||
+               (vigIATF&&vigIATF.payload&&vigIATF.payload.id_visual)||id;
+    a.idEletronico=(a.d0&&a.d0.payload&&a.d0.payload.id_eletronico)||'';
+    animals.push(a);
+  }
+  return animals;
+}
+
+/* ── LOAD DATA ── */
+function loadData(){
+  var c=getCfg();
+  if(!c.url||!c.key){toast('Configure URL e chave','err');return;}
+  var url=c.url+'/rest/v1/reprogen_eventos?select=*&order=criado_em.desc&limit=50000';
+  if(c.farm)url+='&fazenda=eq.'+encodeURIComponent(c.farm);
+  g('spinner').style.display='block';
+  var xhr=new XMLHttpRequest();
+  xhr.onload=function(){
+    g('spinner').style.display='none';
+    if(xhr.status>=200&&xhr.status<300){
+      try{
+        ALL_EVENTS=JSON.parse(xhr.responseText);
+        ALL_ANIMALS=buildAnimals(ALL_EVENTS);
+        renderAll();
+        var now=new Date();
+        g('last-sync').textContent='Atualizado: '+('0'+now.getHours()).slice(-2)+':'+('0'+now.getMinutes()).slice(-2);
+        toast(ALL_EVENTS.length+' eventos · '+ALL_ANIMALS.length+' matrizes carregadas','ok');
+      }catch(ex){toast('Erro parse: '+ex.message,'err');}
+    }else{toast('Erro '+xhr.status+': '+xhr.responseText.slice(0,200),'err');}
+  };
+  xhr.onerror=function(){g('spinner').style.display='none';toast('Erro de rede','err');};
+  xhr.open('GET',url,true);
+  xhr.setRequestHeader('apikey',c.key);
+  xhr.setRequestHeader('Authorization','Bearer '+c.key);
+  xhr.send();
+}
+
+/* ── RENDER ── */
+function renderAll(){
+  renderKPIs();
+  renderChart();
+  renderFazendas();
+  populateFilters();
+  applyFilters();
+}
+
+function renderKPIs(){
+  var an=ALL_ANIMALS;
+  var pr=an.filter(function(a){return a.state==='PRENHA';}).length;
+  var pd=an.filter(function(a){return a.state==='DG PEND';}).length;
+  var vz=an.filter(function(a){return a.state==='VAZIA';}).length;
+  var fzs={};an.forEach(function(a){fzs[a.fazenda]=1;});
+  g('k-ev').textContent=ALL_EVENTS.length;
+  g('k-an').textContent=an.length;
+  g('k-pr').textContent=pr; g('k-pr-pct').textContent=pct(pr,an.length);
+  g('k-pd').textContent=pd; g('k-pd-pct').textContent=pct(pd,an.length);
+  g('k-vz').textContent=vz; g('k-vz-pct').textContent=pct(vz,an.length);
+  g('k-fz').textContent=Object.keys(fzs).length;
+}
+
+function renderChart(){
+  var an=ALL_ANIMALS;
+  var pr=an.filter(function(a){return a.state==='PRENHA';}).length;
+  var pd=an.filter(function(a){return a.state==='DG PEND';}).length;
+  var vz=an.filter(function(a){return a.state==='VAZIA';}).length;
+  var sm=an.filter(function(a){return a.state==='SEM IATF';}).length;
+  var data=[pr,pd,vz,sm];
+  var colors=['#2ecc71','#f4a228','#e74c3c','#555'];
+  var labels=['Prenha','DG Pend','Vazia','Sem IATF'];
+  if(pieChartInst)pieChartInst.destroy();
+  var ctx=document.getElementById('pieChart').getContext('2d');
+  pieChartInst=new Chart(ctx,{type:'doughnut',data:{labels:labels,datasets:[{data:data,backgroundColor:colors,borderWidth:0}]},options:{cutout:'65%',plugins:{legend:{display:false}},animation:{duration:400}}});
+  var leg='';
+  for(var i=0;i<labels.length;i++){
+    leg+='<div class="legend-item"><div class="legend-dot" style="background:'+colors[i]+'"></div>';
+    leg+='<span style="color:'+colors[i]+';font-weight:700">'+data[i]+'</span>';
+    leg+='<span style="color:#888"> '+labels[i]+'</span>';
+    if(an.length>0)leg+='<span style="color:#444;font-size:.7rem"> '+pct(data[i],an.length)+'</span>';
+    leg+='</div>';
+  }
+  g('pie-legend').innerHTML=leg;
+}
+
+function renderFazendas(){
+  var byF={};
+  ALL_ANIMALS.forEach(function(a){
+    if(!byF[a.fazenda])byF[a.fazenda]={total:0,pr:0,pd:0,vz:0};
+    byF[a.fazenda].total++;
+    if(a.state==='PRENHA')byF[a.fazenda].pr++;
+    else if(a.state==='DG PEND')byF[a.fazenda].pd++;
+    else if(a.state==='VAZIA')byF[a.fazenda].vz++;
+  });
+  var html='';
+  for(var faz in byF){
+    var f=byF[faz],t=f.total;
+    html+='<div class="fazenda-card">';
+    html+='<div class="fazenda-name">'+escH(faz)+'</div>';
+    html+=bar('#2ecc71','Prenha',f.pr,t);
+    html+=bar('#f4a228','DG Pend',f.pd,t);
+    html+=bar('#e74c3c','Vazia',f.vz,t);
+    html+='<div style="color:#555;font-size:.72rem;margin-top:4px">Total: '+t+'</div>';
+    html+='</div>';
+  }
+  g('fazenda-cards').innerHTML=html||'<div style="color:#444;font-size:.82rem">Nenhuma fazenda encontrada</div>';
+}
+
+function bar(color,label,n,t){
+  var w=t>0?Math.round(n/t*100):0;
+  return '<div class="bar-row"><span style="width:54px;color:'+color+'">'+label+'</span>'+
+    '<div class="bar-bg"><div class="bar-fill" style="width:'+w+'%;background:'+color+'"></div></div>'+
+    '<span style="width:44px;text-align:right;color:'+color+'">'+n+'</span></div>';
+}
+
+function escH(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+function populateFilters(){
+  var fazs={},lotes={};
+  ALL_ANIMALS.forEach(function(a){fazs[a.fazenda]=1;if(a.lote)lotes[a.lote]=1;});
+  var fSel=g('f-faz'),lSel=g('f-lote');
+  fSel.innerHTML='<option value="">Todas as fazendas</option>';
+  Object.keys(fazs).sort().forEach(function(f){fSel.innerHTML+='<option>'+escH(f)+'</option>';});
+  lSel.innerHTML='<option value="">Todos os lotes</option>';
+  Object.keys(lotes).sort().forEach(function(l){lSel.innerHTML+='<option>'+escH(l)+'</option>';});
+}
+
+function applyFilters(){
+  var id=(g('f-id').value||'').toLowerCase();
+  var faz=g('f-faz').value;
+  var st=g('f-st').value;
+  var lote=g('f-lote').value;
+  var r=ALL_ANIMALS.filter(function(a){
+    if(id&&(a.id||'').toLowerCase().indexOf(id)<0&&(a.idVisual||'').toLowerCase().indexOf(id)<0)return false;
+    if(faz&&a.fazenda!==faz)return false;
+    if(st&&a.state!==st)return false;
+    if(lote&&a.lote!==lote)return false;
+    return true;
+  });
+  g('f-count').textContent=r.length+' de '+ALL_ANIMALS.length;
+  renderTable(r);
+}
+
+function clearFilters(){g('f-id').value='';g('f-faz').value='';g('f-st').value='';g('f-lote').value='';applyFilters();}
+
+function stTag(s){
+  var cls={PRENHA:'t-prenha','DG PEND':'t-pend',VAZIA:'t-vazia','SEM IATF':'t-sem'}[s]||'t-sem';
+  return '<span class="tag '+cls+'">'+escH(s)+'</span>';
+}
+
+function renderTable(animals){
+  var tbody=g('tbody'),h='';
+  if(!animals.length){tbody.innerHTML='<tr class="empty-row"><td colspan="10">Nenhuma matriz encontrada</td></tr>';return;}
+  var lim=Math.min(animals.length,500);
+  for(var i=0;i<lim;i++){
+    var a=animals[i];
+    h+='<tr>';
+    h+='<td class="mono">'+escH(a.idVisual||a.id)+'</td>';
+    h+='<td style="color:#555;font-size:.73rem">'+escH(a.idEletronico||'—')+'</td>';
+    h+='<td style="color:#888;font-size:.75rem">'+escH(a.fazenda||'—')+'</td>';
+    h+='<td style="color:#888;font-size:.75rem">'+escH(a.lote||'—')+'</td>';
+    h+='<td>'+stTag(a.state)+'</td>';
+    h+='<td style="white-space:nowrap">'+escH(a.dataIATF||'—')+'</td>';
+    h+='<td style="font-size:.75rem">'+escH(a.touro||'—')+'</td>';
+    h+='<td><span class="tag '+(a.dgResult==='prenha'?'t-prenha':a.dgResult==='vazia'?'t-vazia':'t-sem')+'">'+escH(a.dgResult||'—')+'</span></td>';
+    h+='<td style="white-space:nowrap">'+escH(a.dataDG||'—')+'</td>';
+    h+='<td style="color:#555;font-size:.73rem">'+escH(a.operador||'—')+'</td>';
+    h+='</tr>';
+  }
+  if(animals.length>500)h+='<tr class="empty-row"><td colspan="10">... mais '+(animals.length-500)+' matrizes</td></tr>';
+  tbody.innerHTML=h;
+}
+
+/* ── CONCEPT PLUS EXPORT ── */
+function exportCP(){
+  if(!ALL_ANIMALS.length){toast('Carregue os dados primeiro','warn');return;}
+  if(typeof XLSX==='undefined'){toast('SheetJS não carregou. Verifique sua internet.','err');return;}
+  try{
+    var wb=XLSX.utils.book_new();
+    var rows=ALL_ANIMALS.map(function(a){
+      return{
+        'ID VISUAL':String(a.idVisual||a.id||''),
+        'ID ELETRONICO':String(a.idEletronico||''),
+        'FAZENDA':a.fazenda||'',
+        'LOTE':a.lote||'',
+        'STATUS REPRODUTIVO':a.state||'',
+        'DATA IATF':a.dataIATF||'',
+        'TOURO':(a.vigIATF&&a.vigIATF.payload&&a.vigIATF.payload.touro)||'',
+        'RACA TOURO':(a.vigIATF&&a.vigIATF.payload&&a.vigIATF.payload.racaTouro)||'',
+        'CODIGO TOURO':String((a.vigIATF&&a.vigIATF.payload&&a.vigIATF.payload.codigoTouro)||''),
+        'CENTRAL':(a.vigIATF&&a.vigIATF.payload&&a.vigIATF.payload.central)||'',
+        'PARTIDA':String((a.vigIATF&&a.vigIATF.payload&&a.vigIATF.payload.partida)||''),
+        'INSEMINADOR':(a.vigIATF&&a.vigIATF.payload&&a.vigIATF.payload.inseminador)||'',
+        'DG':a.dgResult||'',
+        'DATA DG':a.dataDG||'',
+        'OPERADOR':a.operador||''
+      };
+    });
+    var ws=XLSX.utils.json_to_sheet(rows);
+    ws['!cols']=Object.keys(rows[0]||{}).map(function(h){return{wch:Math.min(Math.max(h.length+2,12),30)};});
+    XLSX.utils.book_append_sheet(wb,ws,'CONCEPT PLUS');
+
+    /* Aba de auditoria */
+    var pr=ALL_ANIMALS.filter(function(a){return a.state==='PRENHA';}).length;
+    var pd=ALL_ANIMALS.filter(function(a){return a.state==='DG PEND';}).length;
+    var vz=ALL_ANIMALS.filter(function(a){return a.state==='VAZIA';}).length;
+    var total=ALL_ANIMALS.length;
+    var auditRows=[
+      {'INDICADOR':'Total matrizes','VALOR':total},
+      {'INDICADOR':'Prenha','VALOR':pr},
+      {'INDICADOR':'% Concepção (prenha/total)','VALOR':pct(pr,total)},
+      {'INDICADOR':'DG Pendente','VALOR':pd},
+      {'INDICADOR':'Vazia','VALOR':vz},
+      {'INDICADOR':'Total eventos','VALOR':ALL_EVENTS.length},
+      {'INDICADOR':'Fonte','VALOR':'REPROGEN CENTRAL — Supabase'},
+      {'INDICADOR':'Data exportação','VALOR':new Date().toLocaleDateString('pt-BR')}
+    ];
+    XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(auditRows),'DASHBOARD');
+
+    var dt=new Date();
+    var fname='REPROGEN_CENTRAL_CP_'+dt.getFullYear()+(dt.getMonth()+1<10?'0':'')+(dt.getMonth()+1)+(dt.getDate()<10?'0':'')+dt.getDate()+'.xlsx';
+    XLSX.writeFile(wb,fname);
+    toast('Concept Plus exportado: '+total+' matrizes','ok');
+  }catch(ex){toast('Erro ao exportar: '+ex.message,'err');}
+}
+
+/* ── JSON BACKUP ── */
+function exportJSON(){
+  if(!ALL_EVENTS.length){toast('Carregue os dados primeiro','warn');return;}
+  var blob=new Blob([JSON.stringify({events:ALL_EVENTS,animals:ALL_ANIMALS,exportedAt:new Date().toISOString()},null,2)],{type:'application/json'});
+  var a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='REPROGEN_CENTRAL_BACKUP_'+new Date().toISOString().slice(0,10)+'.json';
+  a.click();
+  toast('JSON exportado: '+ALL_EVENTS.length+' eventos','ok');
+}
+
+
+/* ── IMPORT XLSX ── */
+function importXLSX(){
+  if(typeof XLSX==='undefined'){toast('SheetJS nao carregou. Verifique internet.','err');return;}
+  var inp=document.createElement('input');
+  inp.type='file'; inp.accept='.xlsx,.xls';
+  inp.onchange=function(ev){
+    var file=ev.target.files[0]; if(!file)return;
+    g('import-status').textContent='Lendo: '+file.name.slice(0,40)+'...';
+    var reader=new FileReader();
+    reader.onload=function(e){
+      try{
+        var wb=XLSX.read(new Uint8Array(e.target.result),{type:'array'});
+        processWB(wb,file.name);
+      }catch(ex){toast('Erro ao ler XLSX: '+ex.message,'err');g('import-status').textContent='';}
+    };
+    reader.readAsArrayBuffer(file);
+  };
+  inp.click();
+}
+
+function processWB(wb,fname){
+  var priority=['CONCEPT PLUS','BASE_LIMPA','Concept Plus','base_limpa'];
+  var sn=wb.SheetNames[0];
+  for(var pi=0;pi<priority.length;pi++){if(wb.SheetNames.indexOf(priority[pi])>=0){sn=priority[pi];break;}}
+  var ws=wb.Sheets[sn];
+  var aoa=XLSX.utils.sheet_to_json(ws,{header:1,defval:'',raw:true});
+
+  /* detectar linha de cabeçalho */
+  var hRow=-1,idCol=-1;
+  var idAliases=['ID VISUAL','N MATRIZ','NUMERO','BRINCO','ID_VISUAL','ID ANIMAL','MATRIZ','ANIMAL'];
+  for(var ri=0;ri<Math.min(aoa.length,15);ri++){
+    var row=aoa[ri];
+    for(var ci=0;ci<row.length;ci++){
+      var cell=String(row[ci]||'').toUpperCase().trim();
+      for(var ai=0;ai<idAliases.length;ai++){if(cell===idAliases[ai]){hRow=ri;idCol=ci;break;}}
+      if(hRow>=0)break;
+    }
+    if(hRow>=0)break;
+  }
+  if(hRow<0){toast('Cabecalho nao encontrado. Planilha deve ter "ID VISUAL" ou similar.','err');g('import-status').textContent='Erro';return;}
+
+  /* mapa de colunas */
+  var hdrs=aoa[hRow];
+  var cm={};
+  for(var ci=0;ci<hdrs.length;ci++){cm[String(hdrs[ci]||'').toUpperCase().trim()]=ci;}
+  function fc(als){for(var i=0;i<als.length;i++){if(cm[als[i]]!==undefined)return cm[als[i]];}return -1;}
+
+  var cols={
+    id:   fc(['ID VISUAL','N MATRIZ','NUMERO','BRINCO','ID_VISUAL','MATRIZ','ANIMAL']),
+    ide:  fc(['ID ELETRONICO','ID ELETRONICO','RFID','EID','SISBOV','ID ELECTRONICO']),
+    ia:   fc(['DATA IATF','DATA IA','DT IA','DATA INSEMINACAO','DATA INSEMINACAO','DATA_IATF','DATA_IA']),
+    dg:   fc(['DG','DG 30-60','DG 30','RESULTADO DG','DIAGNOSTICO','DIAGNOSTICO GESTACIONAL','DG30']),
+    dgf:  fc(['DG FINAL','DIAGNOSTICO FINAL','DIAGNOSTICO GESTACIONAL FINAL','DG_FINAL']),
+    st:   fc(['STATUS REPRODUTIVO','STATUS','PRENHEZ','SITUACAO']),
+    touro:fc(['TOURO','REPRODUTOR','NOME TOURO','TOURO_NOME']),
+    faz:  fc(['PROPRIEDADE','FAZENDA','FAZENDA_NOME','NOME FAZENDA']),
+    lote: fc(['LOTE','GRUPO','LOTE BIOLOGICO','LOTE_BIOLOGICO']),
+    raca: fc(['RACA','RACA','RAÇA ANIMAL']),
+    cat:  fc(['CATEGORIA','CAT','CATEGORIA ANIMAL']),
+    ins:  fc(['INSEMINADOR','TECNICO','OPERADOR']),
+    part: fc(['PARTIDA','PALHETA']),
+    codT: fc(['CODIGO TOURO','COD TOURO','CODIGO_TOURO']),
+  };
+
+  function nd(v){
+    var s=String(v||'').toUpperCase().trim();
+    if(!s||s==='SDG'||s==='S/DG'||s==='FALTOU'||s==='N VEIO'||s==='NAO VEIO'||s==='-'||s==='N/D')return '';
+    if(s==='1'||s==='PRENHA'||s==='GESTANTE'||s==='POSITIVO'||s==='P'||s==='G'||s==='SIM')return 'prenha';
+    if(s==='0'||s==='VAZIA'||s==='NEGATIVO'||s==='N'||s==='V'||s==='NAO')return 'vazia';
+    if(s==='0D'||s==='DESCARTE'||s==='DESC')return 'vazia';
+    return '';
+  }
+  function pd(v){
+    if(!v&&v!==0)return '';
+    if(typeof v==='number'&&v>40000&&v<60000){
+      var d=new Date(Math.round((v-25569)*86400000));
+      return d.toISOString().slice(0,10);
+    }
+    var s=String(v).replace(/\//g,'-').trim();
+    /* DD-MM-YYYY → YYYY-MM-DD */
+    var m=s.match(/^(\d{1,2})-(\d{1,2})-(\d{4})$/);
+    if(m)return m[3]+'-'+m[2].padStart(2,'0')+'-'+m[1].padStart(2,'0');
+    return s.slice(0,10);
+  }
+
+  var byA={};
+  var defFaz=g('c-farm').value||'IMPORTADO';
+
+  for(var ri=hRow+1;ri<aoa.length;ri++){
+    var row=aoa[ri];
+    var id=String(row[cols.id]||'').trim(); if(!id)continue;
+    var iaDate=cols.ia>=0?pd(row[cols.ia]):'';
+    var dg30=cols.dg>=0?nd(row[cols.dg]):'';
+    var dgFin=cols.dgf>=0?nd(row[cols.dgf]):'';
+    var dgR=dgFin||dg30;
+    var faz=cols.faz>=0&&row[cols.faz]?String(row[cols.faz]).trim():defFaz;
+    if(!byA[id])byA[id]={id:id,fazenda:faz,ide:'',lote:'',rows:[]};
+    if(cols.ide>=0&&row[cols.ide])byA[id].ide=String(row[cols.ide]).trim();
+    byA[id].rows.push({
+      iaDate:iaDate,dgR:dgR,
+      touro:cols.touro>=0?String(row[cols.touro]||'').trim():'',
+      lote:cols.lote>=0?String(row[cols.lote]||'').trim():'',
+      ins:cols.ins>=0?String(row[cols.ins]||'').trim():'',
+      faz:faz,
+      codT:cols.codT>=0?String(row[cols.codT]||'').trim():'',
+      part:cols.part>=0?String(row[cols.part]||'').trim():'',
+    });
+  }
+
+  var animals=[];
+  for(var aid in byA){
+    var a=byA[aid];
+    var iatfRows=a.rows.filter(function(r){return r.iaDate;});
+    iatfRows.sort(function(x,y){return x.iaDate<y.iaDate?1:-1;});
+    var vig=iatfRows[0]||null;
+    var state='SEM IATF';
+    if(vig){
+      state='DG PEND';
+      if(vig.dgR==='prenha')state='PRENHA';
+      else if(vig.dgR==='vazia')state='VAZIA';
+    }
+    animals.push({
+      id:aid, idVisual:aid, idEletronico:a.ide,
+      fazenda:vig?vig.faz:a.fazenda,
+      lote:vig?vig.lote:(a.rows[0]&&a.rows[0].lote)||'',
+      state:state,
+      dataIATF:vig?vig.iaDate:'',
+      touro:vig?vig.touro:'',
+      dgResult:vig?vig.dgR:'',
+      dataDG:'', operador:vig?vig.ins:'',
+      vigIATF:vig?{payload:{touro:vig.touro,lote:vig.lote,codTouro:vig.codT,partida:vig.part,inseminador:vig.ins}}:null,
+      latDG:vig&&vig.dgR?{payload:{resultado:vig.dgR}}:null,
+      source:'xlsx'
+    });
+  }
+
+  ALL_ANIMALS=animals; ALL_EVENTS=[];
+  g('last-sync').textContent='Planilha: '+fname.slice(0,25);
+  g('import-status').textContent='OK — '+animals.length+' matrizes (aba: '+sn+')';
+  renderAll();
+  toast('Importado: '+animals.length+' matrizes · aba '+sn,'ok');
+}
+
+/* ── INIT ── */
+loadConfig();
+</script>
+
+<script>
+if('serviceWorker' in navigator){
+  window.addEventListener('load', function(){
+    navigator.serviceWorker.register('./service-worker.js')
+      .catch(function(e){ console.warn('SW:', e); });
+  });
+}
+</script>
+</body>
+</html>
